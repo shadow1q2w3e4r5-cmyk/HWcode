@@ -12,8 +12,8 @@ use crate::diagnostics::Span;
 /// - `Device<Sensor, Active>`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeSpec {
-    pub domain: Option<String>,       // e.g., Some("RAM"), Some("VRAM"), Some("DMABuffer"), Some("MMIO")
-    pub base_type: String,            // e.g., "i32", "f32", "Matrix<f32>", "Sensor"
+    pub domain: Option<String>, // e.g., Some("RAM"), Some("VRAM"), Some("DMABuffer"), Some("MMIO")
+    pub base_type: String,      // e.g., "i32", "f32", "Matrix<f32>", "Sensor"
     pub layout_or_state: Option<String>, // e.g., Some("Linear"), Some("Tiled2D"), Some("Active")
 }
 
@@ -213,15 +213,9 @@ pub enum Stmt {
         span: Span,
     },
     /// `await ev;`
-    Await {
-        event_var: String,
-        span: Span,
-    },
+    Await { event_var: String, span: Span },
     /// `release(handle);`
-    Release {
-        var_name: String,
-        span: Span,
-    },
+    Release { var_name: String, span: Span },
     /// `unsafe capability(Cap::MMIO) { ... }` or `unsafe { ... }`
     UnsafeBlock {
         capability: Option<String>,
@@ -229,20 +223,11 @@ pub enum Stmt {
         span: Span,
     },
     /// `trace(target);`
-    Trace {
-        label: String,
-        span: Span,
-    },
+    Trace { label: String, span: Span },
     /// `return expr;` or implicit tail return expression
-    Return {
-        value: Option<Expr>,
-        span: Span,
-    },
+    Return { value: Option<Expr>, span: Span },
     /// Standalone expression statement
-    ExprStmt {
-        expr: Expr,
-        span: Span,
-    },
+    ExprStmt { expr: Expr, span: Span },
     /// GPU queue dispatch: `dispatch(queue, kernel, grid: (16, 16, 1), block: (16, 16, 1), args: [a, b, c]);`
     Dispatch {
         queue: String,

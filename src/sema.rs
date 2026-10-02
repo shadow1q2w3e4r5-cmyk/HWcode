@@ -165,7 +165,7 @@ impl<'a> SemanticAnalyzer<'a> {
             if attr.name == "realtime" {
                 for (k, v) in &attr.args {
                     if k == "deadline" {
-                        realtime_deadline_ns = Some( Self::parse_time_to_ns(v) );
+                        realtime_deadline_ns = Some(Self::parse_time_to_ns(v));
                     }
                     if k == "no_alloc" && v == "true" {
                         realtime_no_alloc = true;
@@ -272,12 +272,7 @@ impl<'a> SemanticAnalyzer<'a> {
         }
     }
 
-    fn analyze_stmt(
-        &mut self,
-        stmt: &Stmt,
-        _current_fn: Option<&str>,
-        diags: &mut DiagnosticBag,
-    ) {
+    fn analyze_stmt(&mut self, stmt: &Stmt, _current_fn: Option<&str>, diags: &mut DiagnosticBag) {
         match stmt {
             Stmt::Let {
                 name,
@@ -353,10 +348,7 @@ impl<'a> SemanticAnalyzer<'a> {
                             );
                         }
                         _ => {
-                            let ep = info
-                                .endpoint
-                                .clone()
-                                .unwrap_or_else(|| "/F1".to_string());
+                            let ep = info.endpoint.clone().unwrap_or_else(|| "/F1".to_string());
                             info.ownership = OwnershipState::Released { at: *span };
                             self.hir.instructions.push(HirInstruction::ResourceRelease {
                                 var_name: var_name.clone(),
@@ -443,7 +435,8 @@ impl<'a> SemanticAnalyzer<'a> {
                     }
                 }
 
-                let total_threads = (grid.0 * grid.1 * grid.2) as u64 * (block.0 * block.1 * block.2) as u64;
+                let total_threads =
+                    (grid.0 * grid.1 * grid.2) as u64 * (block.0 * block.1 * block.2) as u64;
                 let est_time_ns = 500 + total_threads / 8;
 
                 self.hir.instructions.push(HirInstruction::GpuDispatch {
@@ -854,9 +847,9 @@ impl<'a> SemanticAnalyzer<'a> {
                         endpoint: Some(resolved),
                         clock_domain: node_opt.as_ref().map(|n| n.clock_domain.name.clone()),
                         device_class: node_opt.as_ref().map(|n| n.class.to_string()),
-                        device_state: node_opt
-                            .as_ref()
-                            .and_then(|n| n.state_machine.as_ref().map(|sm| sm.initial_state.clone())),
+                        device_state: node_opt.as_ref().and_then(|n| {
+                            n.state_machine.as_ref().map(|sm| sm.initial_state.clone())
+                        }),
                         ownership: OwnershipState::Shared,
                         is_synchronized_signal: false,
                         budget_remaining_watts: None,
@@ -909,10 +902,7 @@ impl<'a> SemanticAnalyzer<'a> {
         let trigger_str = format!("REG.{} = {}", reg_name, val_str);
 
         if let Some(info) = self.vars.get_mut(device_var) {
-            let ep = info
-                .endpoint
-                .clone()
-                .unwrap_or_else(|| "/F7".to_string());
+            let ep = info.endpoint.clone().unwrap_or_else(|| "/F7".to_string());
             let cur_state = info
                 .device_state
                 .clone()
@@ -921,7 +911,8 @@ impl<'a> SemanticAnalyzer<'a> {
             if let Some(node) = self.graph.get_node(&ep).cloned() {
                 if let Some(sm) = &node.state_machine {
                     if let Some(rule) = sm.transitions.iter().find(|r| {
-                        r.from_state == cur_state && r.trigger.replace(' ', "") == trigger_str.replace(' ', "")
+                        r.from_state == cur_state
+                            && r.trigger.replace(' ', "") == trigger_str.replace(' ', "")
                     }) {
                         let new_state = rule.to_state.clone();
                         info.device_state = Some(new_state.clone());
@@ -942,7 +933,10 @@ impl<'a> SemanticAnalyzer<'a> {
                 HardwareErrorKind::InvalidDeviceState,
                 PhysicalBoundary::State,
                 span,
-                format!("Unknown device handle `{}` in register write `REG.{}`", device_var, reg_name),
+                format!(
+                    "Unknown device handle `{}` in register write `REG.{}`",
+                    device_var, reg_name
+                ),
                 None,
                 None,
             );
@@ -1022,12 +1016,22 @@ impl<'a> SemanticAnalyzer<'a> {
             let src_clk = self
                 .graph
                 .get_node(&src_ep)
-                .map(|n| format!("{} ({} MHz)", n.clock_domain.name, n.clock_domain.frequency_mhz))
+                .map(|n| {
+                    format!(
+                        "{} ({} MHz)",
+                        n.clock_domain.name, n.clock_domain.frequency_mhz
+                    )
+                })
                 .unwrap_or_else(|| "ASYNC_CLK_A".to_string());
             let dst_clk = self
                 .graph
                 .get_node(&dst_ep)
-                .map(|n| format!("{} ({} MHz)", n.clock_domain.name, n.clock_domain.frequency_mhz))
+                .map(|n| {
+                    format!(
+                        "{} ({} MHz)",
+                        n.clock_domain.name, n.clock_domain.frequency_mhz
+                    )
+                })
                 .unwrap_or_else(|| "ASYNC_CLK_B".to_string());
 
             diags.emit_error(
@@ -1057,12 +1061,10 @@ impl<'a> SemanticAnalyzer<'a> {
             // Explicit multi-hop route specified by programmer: e.g. `/F1 -> /F2 -> /F3`
             let resolved_hops: Vec<String> =
                 waypoints.iter().map(|w| self.resolve_endpoint(w)).collect();
-            self.graph
-                .plan_route(&src_ep, &dst_ep)
-                .map(|mut r| {
-                    r.hops = resolved_hops;
-                    r
-                })
+            self.graph.plan_route(&src_ep, &dst_ep).map(|mut r| {
+                r.hops = resolved_hops;
+                r
+            })
         } else {
             self.graph.plan_route(&src_ep, &dst_ep)
         };
@@ -1092,7 +1094,11 @@ impl<'a> SemanticAnalyzer<'a> {
 
         // 3. Memory & Physical Layout Boundary (Section 4):
         // Check if source and destination have a Semantic Type match vs Physical Layout mismatch!
-        let src_var_info = self.vars.get(src_raw).cloned().or_else(|| payload_info.clone());
+        let src_var_info = self
+            .vars
+            .get(src_raw)
+            .cloned()
+            .or_else(|| payload_info.clone());
         let dst_var_info = self.vars.get(dst_raw).cloned();
 
         // Check semantic type mismatch if both source and destination variables are typed buffers
@@ -1197,7 +1203,10 @@ impl<'a> SemanticAnalyzer<'a> {
         }
 
         // Distributed Cluster RDMA Network Transfer (Phase 3)
-        if planned.protocols.iter().any(|p| p.contains("RDMA")) || src_ep.contains("/N") || dst_ep.contains("/N") {
+        if planned.protocols.iter().any(|p| p.contains("RDMA"))
+            || src_ep.contains("/N")
+            || dst_ep.contains("/N")
+        {
             self.hir.instructions.push(HirInstruction::RdmaTransfer {
                 src_node: src_ep.clone(),
                 dst_node: dst_ep.clone(),
@@ -1305,10 +1314,7 @@ impl<'a> SemanticAnalyzer<'a> {
                 // Device State Machine Verification on method calls like `sensor.read_temperature()` (Section 7)
                 if let Some(recv_var) = receiver {
                     if let Some(info) = self.vars.get(recv_var).cloned() {
-                        let ep = info
-                            .endpoint
-                            .clone()
-                            .unwrap_or_else(|| "/F7".to_string());
+                        let ep = info.endpoint.clone().unwrap_or_else(|| "/F7".to_string());
                         let actual_state = info
                             .device_state
                             .clone()
@@ -1353,14 +1359,12 @@ impl<'a> SemanticAnalyzer<'a> {
                                         );
                                         return;
                                     } else {
-                                        self.hir.instructions.push(
-                                            HirInstruction::DeviceCommand {
-                                                device_var: recv_var.clone(),
-                                                endpoint: ep,
-                                                command: func.clone(),
-                                                verified_state: actual_state,
-                                            },
-                                        );
+                                        self.hir.instructions.push(HirInstruction::DeviceCommand {
+                                            device_var: recv_var.clone(),
+                                            endpoint: ep,
+                                            command: func.clone(),
+                                            verified_state: actual_state,
+                                        });
                                         return;
                                     }
                                 }

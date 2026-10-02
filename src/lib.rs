@@ -10,8 +10,8 @@ pub mod hardware_graph;
 pub mod hir;
 pub mod lexer;
 pub mod parser;
-pub mod sema;
 pub mod runner;
+pub mod sema;
 pub mod simulator;
 pub mod visualizer;
 
@@ -99,7 +99,10 @@ mod tests {
             .instructions
             .iter()
             .any(|i| matches!(i, HirInstruction::LayoutConvert { from_layout, to_layout, .. } if from_layout == "Linear" && to_layout == "Tiled2D"));
-        assert!(has_layout_conv, "Expected automatic LAYOUT_CONVERT Linear -> Tiled2D");
+        assert!(
+            has_layout_conv,
+            "Expected automatic LAYOUT_CONVERT Linear -> Tiled2D"
+        );
     }
 
     #[test]
@@ -111,7 +114,9 @@ mod tests {
             /F4 ~> /F3 : data;
         "#;
         let mut graph = HardwareGraph::standard_machine();
-        graph.granted_capabilities.retain(|c| c != "Cap::PeerMemory");
+        graph
+            .granted_capabilities
+            .retain(|c| c != "Cap::PeerMemory");
 
         let out = compile_source("test_fallback.hwc", src, OptLevel::Fast, Some(graph));
         assert!(!out.diagnostics.has_errors());
@@ -132,7 +137,11 @@ mod tests {
         let out = compile_source("test_ownership.hwc", src, OptLevel::Fast, None);
         assert!(out.diagnostics.has_errors());
         let msg = out.diagnostics.format_all();
-        assert!(msg.contains("E0501"), "Expected E0501 OwnershipViolation, got:\n{}", msg);
+        assert!(
+            msg.contains("E0501"),
+            "Expected E0501 OwnershipViolation, got:\n{}",
+            msg
+        );
     }
 
     #[test]
@@ -216,7 +225,8 @@ mod tests {
         let out = compile_source("test_sim.hwc", src, OptLevel::Max, None);
         assert!(!out.diagnostics.has_errors());
 
-        let sim = HardwareSimulator::run(&out.report.hir, &out.graph, InjectedFault::LinkDisconnect);
+        let sim =
+            HardwareSimulator::run(&out.report.hir, &out.graph, InjectedFault::LinkDisconnect);
         assert_eq!(
             sim.route_state_transitions,
             vec!["NORMAL", "FAILED", "REPLAN", "FALLBACK", "RECOVERED"]
@@ -302,11 +312,15 @@ mod tests {
             matches!(
                 i,
                 HirInstruction::ContentionSchedule {
-                    concurrent_ops: 2, ..
+                    concurrent_ops: 2,
+                    ..
                 }
             )
         });
-        assert!(has_contention, "Expected CONTENTION_SCHEDULE in Universal HIR");
+        assert!(
+            has_contention,
+            "Expected CONTENTION_SCHEDULE in Universal HIR"
+        );
 
         let sim = HardwareSimulator::run(&out.report.hir, &out.graph, InjectedFault::None);
         let html = crate::visualizer::generate_interactive_html(&sim, "Contention Test");
@@ -347,13 +361,16 @@ mod tests {
                 } if to_layout == "Tensor4D" && mechanism == "NPU_TensorCore_Packer"
             )
         });
-        assert!(has_npu_packer, "Expected LAYOUT_CONVERT via NPU_TensorCore_Packer");
+        assert!(
+            has_npu_packer,
+            "Expected LAYOUT_CONVERT via NPU_TensorCore_Packer"
+        );
     }
 
     #[test]
     fn test_phase4_self_hosted_compiler_compilation() {
-        let selfhost_src = std::fs::read_to_string("selfhost/hwcc.hwc")
-            .expect("selfhost/hwcc.hwc must exist");
+        let selfhost_src =
+            std::fs::read_to_string("selfhost/hwcc.hwc").expect("selfhost/hwcc.hwc must exist");
         let out = compile_source("selfhost/hwcc.hwc", &selfhost_src, OptLevel::Max, None);
         assert!(
             !out.diagnostics.has_errors(),

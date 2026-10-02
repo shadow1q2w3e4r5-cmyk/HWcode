@@ -901,7 +901,10 @@ impl HardwareGraph {
         let dst = Endpoint::parse(dst_ep).base_id();
 
         if !self.nodes.contains_key(&src) {
-            return Err(format!("Source endpoint `{}` does not exist in the Hardware Graph", src));
+            return Err(format!(
+                "Source endpoint `{}` does not exist in the Hardware Graph",
+                src
+            ));
         }
         if !self.nodes.contains_key(&dst) {
             return Err(format!(
@@ -920,13 +923,19 @@ impl HardwareGraph {
                 if !e1.online {
                     rejected.push((
                         vec![src.clone(), dst.clone()],
-                        format!("Direct link ({}) is currently offline/disconnected", e1.protocol),
+                        format!(
+                            "Direct link ({}) is currently offline/disconnected",
+                            e1.protocol
+                        ),
                     ));
                 } else if let Some(req_cap) = &e1.required_capability {
                     if !self.granted_capabilities.contains(req_cap) {
                         rejected.push((
                             vec![src.clone(), dst.clone()],
-                            format!("Blocked by missing capability `{}` on {}", req_cap, e1.protocol),
+                            format!(
+                                "Blocked by missing capability `{}` on {}",
+                                req_cap, e1.protocol
+                            ),
                         ));
                     } else {
                         valid_paths.push((vec![src.clone(), dst.clone()], vec![e1]));
@@ -954,10 +963,8 @@ impl HardwareGraph {
                             .map(|c| self.granted_capabilities.contains(c))
                             .unwrap_or(true);
                         if cap1_ok && cap2_ok {
-                            valid_paths.push((
-                                vec![src.clone(), mid.clone(), dst.clone()],
-                                vec![e1, e2],
-                            ));
+                            valid_paths
+                                .push((vec![src.clone(), mid.clone(), dst.clone()], vec![e1, e2]));
                         }
                     }
                 }
@@ -979,16 +986,14 @@ impl HardwareGraph {
 
         // Sort valid paths by highest effective bandwidth, then lowest latency
         valid_paths.sort_by(|a, b| {
-            let bw_a = a
-                .1
-                .iter()
-                .map(|e| e.bandwidth_gbps)
-                .fold(f64::INFINITY, f64::min);
-            let bw_b = b
-                .1
-                .iter()
-                .map(|e| e.bandwidth_gbps)
-                .fold(f64::INFINITY, f64::min);
+            let bw_a =
+                a.1.iter()
+                    .map(|e| e.bandwidth_gbps)
+                    .fold(f64::INFINITY, f64::min);
+            let bw_b =
+                b.1.iter()
+                    .map(|e| e.bandwidth_gbps)
+                    .fold(f64::INFINITY, f64::min);
             bw_b.partial_cmp(&bw_a).unwrap_or(std::cmp::Ordering::Equal)
         });
 
@@ -1011,7 +1016,10 @@ impl HardwareGraph {
         for edge in best_edges {
             if edge.bandwidth_gbps < min_bw {
                 min_bw = edge.bandwidth_gbps;
-                bottleneck = format!("{} ({} -> {} @ {:.1} GB/s)", edge.protocol, edge.from, edge.to, edge.bandwidth_gbps);
+                bottleneck = format!(
+                    "{} ({} -> {} @ {:.1} GB/s)",
+                    edge.protocol, edge.from, edge.to, edge.bandwidth_gbps
+                );
             }
             total_latency += edge.latency_ns;
             total_power += (edge.power_mw_per_gb * (edge.bandwidth_gbps.min(10.0))) / 1000.0;

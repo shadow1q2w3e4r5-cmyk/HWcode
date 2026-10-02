@@ -20,10 +20,7 @@ pub enum HirInstruction {
         mode: String,
     },
     /// `RESOURCE_RELEASE`: Explicit or scope-exit release of an owned hardware resource
-    ResourceRelease {
-        var_name: String,
-        endpoint: String,
-    },
+    ResourceRelease { var_name: String, endpoint: String },
     /// `ROUTE`: Selected multi-hop or peer-to-peer path through the Hardware Graph
     Route {
         route_id: usize,
@@ -70,9 +67,7 @@ pub enum HirInstruction {
         source_op: String,
     },
     /// `EVENT_WAIT`: Dependency graph synchronization wait on an async event
-    EventWait {
-        event_name: String,
-    },
+    EventWait { event_name: String },
     /// `MEMORY_BARRIER`: Cache flush/invalidate or memory ordering fence across non-coherent domains
     MemoryBarrier {
         ordering: String, // e.g., "AcqRel", "Device", "DMA_Coherency_Flush"
@@ -107,9 +102,7 @@ pub enum HirInstruction {
         remaining_watts: f64,
     },
     /// Observability trace point
-    TracePoint {
-        label: String,
-    },
+    TracePoint { label: String },
     /// GPU Compute Queue Dispatch (Phase 2): `submit_queue(/F3::queue, kernel, grid, block)`
     GpuDispatch {
         queue: String,
@@ -204,11 +197,9 @@ impl fmt::Display for HirInstruction {
                 "RESOURCE_ACQUIRE  {} = acquire({}, {})",
                 dest_var, endpoint, mode
             ),
-            HirInstruction::ResourceRelease { var_name, endpoint } => write!(
-                f,
-                "RESOURCE_RELEASE  release({} @ {})",
-                var_name, endpoint
-            ),
+            HirInstruction::ResourceRelease { var_name, endpoint } => {
+                write!(f, "RESOURCE_RELEASE  release({} @ {})", var_name, endpoint)
+            }
             HirInstruction::Route {
                 route_id,
                 planned,
@@ -307,7 +298,13 @@ impl fmt::Display for HirInstruction {
                 args,
             } => {
                 if let Some(d) = dest_var {
-                    write!(f, "NATIVE_CALL       {} = {}({})", d, func_name, args.join(", "))
+                    write!(
+                        f,
+                        "NATIVE_CALL       {} = {}({})",
+                        d,
+                        func_name,
+                        args.join(", ")
+                    )
                 } else {
                     write!(f, "NATIVE_CALL       {}({})", func_name, args.join(", "))
                 }
@@ -345,7 +342,14 @@ impl fmt::Display for HirInstruction {
             } => write!(
                 f,
                 "GPU_DISPATCH      {} -> {}({}) [grid=({},{}), block=({},{}), est={}ns]",
-                queue, kernel_name, args.join(", "), grid.0, grid.1, block.0, block.1, estimated_time_ns
+                queue,
+                kernel_name,
+                args.join(", "),
+                grid.0,
+                grid.1,
+                block.0,
+                block.1,
+                estimated_time_ns
             ),
             HirInstruction::InterruptAttach {
                 endpoint,
@@ -386,7 +390,15 @@ impl fmt::Display for HirInstruction {
             } => write!(
                 f,
                 "NPU_TENSOR_OP     {}.{}({}) -> {} [dims=({},{},{},{}), lat={}ns]",
-                endpoint, op_type, inputs.join(", "), output, dims.0, dims.1, dims.2, dims.3, latency_ns
+                endpoint,
+                op_type,
+                inputs.join(", "),
+                output,
+                dims.0,
+                dims.1,
+                dims.2,
+                dims.3,
+                latency_ns
             ),
             HirInstruction::FpgaStreamPipe {
                 endpoint,
@@ -420,7 +432,9 @@ pub struct UniversalHirModule {
 impl UniversalHirModule {
     pub fn dump(&self) -> String {
         let mut lines = Vec::new();
-        lines.push("=== Universal Hardware Intermediate Representation (Universal HIR) ===".to_string());
+        lines.push(
+            "=== Universal Hardware Intermediate Representation (Universal HIR) ===".to_string(),
+        );
         for (idx, inst) in self.instructions.iter().enumerate() {
             lines.push(format!("  {:03}: {}", idx, inst));
         }

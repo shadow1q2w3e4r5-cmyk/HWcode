@@ -147,7 +147,9 @@ fn main() {
 
             let mut graph = HardwareGraph::standard_machine();
             if disable_p2p {
-                graph.granted_capabilities.retain(|c| c != "Cap::PeerMemory");
+                graph
+                    .granted_capabilities
+                    .retain(|c| c != "Cap::PeerMemory");
             }
 
             let out = compile_source(file_path, &source, opt_level, Some(graph));
@@ -183,15 +185,24 @@ fn main() {
                 }
                 "profile" => {
                     let sim_res = HardwareSimulator::run(&out.report.hir, &out.graph, fault);
-                    let target_html = html_out.unwrap_or_else(|| file_path.replace(".hwc", ".timeline.html"));
+                    let target_html =
+                        html_out.unwrap_or_else(|| file_path.replace(".hwc", ".timeline.html"));
                     let html_content = generate_interactive_html(&sim_res, file_path);
                     fs::write(&target_html, &html_content).expect("Failed to write HTML timeline");
-                    println!("[1/2] Generated interactive HTML5 timeline -> `{}`", target_html);
+                    println!(
+                        "[1/2] Generated interactive HTML5 timeline -> `{}`",
+                        target_html
+                    );
 
-                    let target_trace = trace_out.unwrap_or_else(|| file_path.replace(".hwc", ".trace.json"));
+                    let target_trace =
+                        trace_out.unwrap_or_else(|| file_path.replace(".hwc", ".trace.json"));
                     let trace_content = generate_chrome_trace_json(&sim_res);
-                    fs::write(&target_trace, &trace_content).expect("Failed to write Chrome trace JSON");
-                    println!("[2/2] Generated Chrome Trace / Perfetto profile -> `{}`", target_trace);
+                    fs::write(&target_trace, &trace_content)
+                        .expect("Failed to write Chrome trace JSON");
+                    println!(
+                        "[2/2] Generated Chrome Trace / Perfetto profile -> `{}`",
+                        target_trace
+                    );
                     println!("\nOpen `{}` in your browser to inspect device tracks, or load `{}` in chrome://tracing!", target_html, target_trace);
                 }
                 "scaffold-driver" => {
@@ -203,8 +214,7 @@ fn main() {
                     fs::write(&c_path, &c_code).expect("Failed to write generated C file");
                     println!("[1/2] Emitted C11 backend code -> `{}`", c_path);
 
-                    let exe_path = output_bin
-                        .unwrap_or_else(|| file_path.replace(".hwc", ".exe"));
+                    let exe_path = output_bin.unwrap_or_else(|| file_path.replace(".hwc", ".exe"));
                     let status = Command::new("gcc")
                         .args([&c_path, "-O2", "-o", &exe_path])
                         .status();

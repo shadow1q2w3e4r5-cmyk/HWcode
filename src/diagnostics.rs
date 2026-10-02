@@ -40,14 +40,14 @@ impl fmt::Display for HardwareErrorKind {
 /// The 7 Physical Boundaries from Section 14.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PhysicalBoundary {
-    Memory,     // Layout and coherency reasoning
-    Device,     // Capability and affine ownership reasoning
-    Clock,      // Synchronization / CDC reasoning
-    Topology,   // Route and recovery reasoning
-    State,      // Valid device state transition reasoning
-    Power,      // Energy and thermal budget linear accounting
-    Temporal,   // Event, deadline, and scheduling reasoning
-    Syntax,     // Lexical / grammar level
+    Memory,   // Layout and coherency reasoning
+    Device,   // Capability and affine ownership reasoning
+    Clock,    // Synchronization / CDC reasoning
+    Topology, // Route and recovery reasoning
+    State,    // Valid device state transition reasoning
+    Power,    // Energy and thermal budget linear accounting
+    Temporal, // Event, deadline, and scheduling reasoning
+    Syntax,   // Lexical / grammar level
 }
 
 impl fmt::Display for PhysicalBoundary {
@@ -238,7 +238,9 @@ impl DiagnosticBag {
     }
 
     pub fn has_errors(&self) -> bool {
-        self.diagnostics.iter().any(|d| d.severity == Severity::Error)
+        self.diagnostics
+            .iter()
+            .any(|d| d.severity == Severity::Error)
     }
 
     pub fn format_all(&self) -> String {

@@ -125,7 +125,10 @@ impl Prng {
     }
 
     fn next_range(&mut self, min: i32, max: i32) -> i32 {
-        self.state = self.state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        self.state = self
+            .state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         let span = (max - min).max(1) as u64;
         let val = (self.state % span) as i32;
         min + val
@@ -154,10 +157,22 @@ impl SnakeGameEngine {
         let start_y = height / 2;
 
         let snake = vec![
-            Point { x: start_x, y: start_y },
-            Point { x: start_x - 1, y: start_y },
-            Point { x: start_x - 2, y: start_y },
-            Point { x: start_x - 3, y: start_y },
+            Point {
+                x: start_x,
+                y: start_y,
+            },
+            Point {
+                x: start_x - 1,
+                y: start_y,
+            },
+            Point {
+                x: start_x - 2,
+                y: start_y,
+            },
+            Point {
+                x: start_x - 3,
+                y: start_y,
+            },
         ];
 
         let mut engine = Self {
@@ -166,7 +181,10 @@ impl SnakeGameEngine {
             snake,
             direction: Direction::Right,
             pending_direction: Direction::Right,
-            food: Point { x: start_x + 5, y: start_y },
+            food: Point {
+                x: start_x + 5,
+                y: start_y,
+            },
             score: 0,
             high_score: 0,
             speed_ms: 85,
@@ -182,10 +200,22 @@ impl SnakeGameEngine {
         let start_x = self.width / 2;
         let start_y = self.height / 2;
         self.snake = vec![
-            Point { x: start_x, y: start_y },
-            Point { x: start_x - 1, y: start_y },
-            Point { x: start_x - 2, y: start_y },
-            Point { x: start_x - 3, y: start_y },
+            Point {
+                x: start_x,
+                y: start_y,
+            },
+            Point {
+                x: start_x - 1,
+                y: start_y,
+            },
+            Point {
+                x: start_x - 2,
+                y: start_y,
+            },
+            Point {
+                x: start_x - 3,
+                y: start_y,
+            },
         ];
         self.direction = Direction::Right;
         self.pending_direction = Direction::Right;
@@ -262,7 +292,11 @@ impl SnakeGameEngine {
         };
 
         // Wall collision check (Section 7 typestate trigger)
-        if new_head.x <= 0 || new_head.x >= self.width - 1 || new_head.y <= 0 || new_head.y >= self.height - 1 {
+        if new_head.x <= 0
+            || new_head.x >= self.width - 1
+            || new_head.y <= 0
+            || new_head.y >= self.height - 1
+        {
             self.game_over = true;
             return;
         }
@@ -299,10 +333,14 @@ impl SnakeGameEngine {
         buffer.push_str("\x1b[H");
 
         // Nokia 3310 Outer Phone Casing
-        buffer.push_str("\x1b[1;36m  .──────────────────────────────────────────────────────────.\x1b[0m\n");
+        buffer.push_str(
+            "\x1b[1;36m  .──────────────────────────────────────────────────────────.\x1b[0m\n",
+        );
         buffer.push_str("\x1b[1;36m /                        \x1b[1;33mNOKIA  3310\x1b[1;36m                         \\\x1b[0m\n");
         buffer.push_str("\x1b[1;36m|  \x1b[1;32m[lll] 4G\x1b[1;36m                                  \x1b[1;32mBATTERY: [████]\x1b[1;36m  |\x1b[0m\n");
-        buffer.push_str("\x1b[1;36m+────────────────────────────────────────────────────────────+\x1b[0m\n");
+        buffer.push_str(
+            "\x1b[1;36m+────────────────────────────────────────────────────────────+\x1b[0m\n",
+        );
 
         // LCD Status Bar
         let status_line = format!(
@@ -313,7 +351,9 @@ impl SnakeGameEngine {
             self.snake.len()
         );
         buffer.push_str(&status_line);
-        buffer.push_str("\x1b[1;36m+────────────────────────────────────────────────────────────+\x1b[0m\n");
+        buffer.push_str(
+            "\x1b[1;36m+────────────────────────────────────────────────────────────+\x1b[0m\n",
+        );
 
         // Nokia LCD Screen Header Border
         buffer.push_str("\x1b[1;36m|  \x1b[1;32m┌──────────────────────────────────────────────────────┐\x1b[1;36m  |\x1b[0m\n");
@@ -353,7 +393,10 @@ impl SnakeGameEngine {
                     let msg = " GAME OVER! ";
                     let idx = (x - 14) as usize;
                     if idx < msg.len() {
-                        buffer.push_str(&format!("\x1b[1;37;41m{}\x1b[0m", msg.chars().nth(idx).unwrap_or(' ')));
+                        buffer.push_str(&format!(
+                            "\x1b[1;37;41m{}\x1b[0m",
+                            msg.chars().nth(idx).unwrap_or(' ')
+                        ));
                     } else {
                         buffer.push(' ');
                     }
@@ -362,7 +405,10 @@ impl SnakeGameEngine {
                     let msg = " PAUSED ";
                     let idx = (x - 15) as usize;
                     if idx < msg.len() {
-                        buffer.push_str(&format!("\x1b[1;30;43m{}\x1b[0m", msg.chars().nth(idx).unwrap_or(' ')));
+                        buffer.push_str(&format!(
+                            "\x1b[1;30;43m{}\x1b[0m",
+                            msg.chars().nth(idx).unwrap_or(' ')
+                        ));
                     } else {
                         buffer.push(' ');
                     }
@@ -375,7 +421,9 @@ impl SnakeGameEngine {
 
         // Nokia LCD Screen Bottom Border
         buffer.push_str("\x1b[1;36m|  \x1b[1;32m└──────────────────────────────────────────────────────┘\x1b[1;36m  |\x1b[0m\n");
-        buffer.push_str("\x1b[1;36m+────────────────────────────────────────────────────────────+\x1b[0m\n");
+        buffer.push_str(
+            "\x1b[1;36m+────────────────────────────────────────────────────────────+\x1b[0m\n",
+        );
 
         // Footer & Controls
         if self.game_over {
@@ -386,7 +434,9 @@ impl SnakeGameEngine {
             buffer.push_str("\x1b[1;36m|  \x1b[1;37m[W/A/S/D or Arrows] Move       \x1b[1;33m[P] Pause    \x1b[1;37m[Q] Quit\x1b[1;36m      |\x1b[0m\n");
         }
         buffer.push_str("\x1b[1;36m|  \x1b[0;32mHWCode Plan: /F1 CPU + /F7 LCD Controller (1.5W Envelope)\x1b[1;36m |\x1b[0m\n");
-        buffer.push_str("\x1b[1;36m\\____________________________________________________________/\x1b[0m\n");
+        buffer.push_str(
+            "\x1b[1;36m\\____________________________________________________________/\x1b[0m\n",
+        );
 
         print!("{}", buffer);
         let _ = io::stdout().flush();
@@ -402,7 +452,10 @@ pub fn run_game(hwc_file_path: &str) {
     win_console::enable_ansi();
 
     println!("\x1b[1;33m================================================================================\x1b[0m");
-    println!("\x1b[1;32m  HWCode Game Engine — Validating Physical Boundaries for `{}`\x1b[0m", hwc_file_path);
+    println!(
+        "\x1b[1;32m  HWCode Game Engine — Validating Physical Boundaries for `{}`\x1b[0m",
+        hwc_file_path
+    );
     println!("\x1b[1;33m================================================================================\x1b[0m");
 
     // 2. Load and verify `snake.hwc` through the full compiler pipeline
@@ -436,9 +489,17 @@ pub fn run_game(hwc_file_path: &str) {
         }
     };
 
-    let out = compile_source(hwc_file_path, &source, OptLevel::Max, Some(HardwareGraph::standard_machine()));
+    let out = compile_source(
+        hwc_file_path,
+        &source,
+        OptLevel::Max,
+        Some(HardwareGraph::standard_machine()),
+    );
     if out.diagnostics.has_errors() {
-        eprintln!("Physical Boundary verification failed:\n{}", out.diagnostics.format_all());
+        eprintln!(
+            "Physical Boundary verification failed:\n{}",
+            out.diagnostics.format_all()
+        );
         return;
     }
 
@@ -495,6 +556,9 @@ pub fn run_game(hwc_file_path: &str) {
     let _ = io::stdout().flush();
     println!("\x1b[1;33m================================================================================\x1b[0m");
     println!("\x1b[1;32m  Thanks for playing Nokia 3310 Snake (Powered 100% by HWCode)!\x1b[0m");
-    println!("\x1b[1;36m  Final Score: {} | High Score: {}\x1b[0m", engine.score, engine.high_score);
+    println!(
+        "\x1b[1;36m  Final Score: {} | High Score: {}\x1b[0m",
+        engine.score, engine.high_score
+    );
     println!("\x1b[1;33m================================================================================\x1b[0m");
 }

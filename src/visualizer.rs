@@ -21,7 +21,11 @@ pub fn generate_chrome_trace_json(sim: &SimulationResult) -> String {
 
 pub fn generate_interactive_html(sim: &SimulationResult, title: &str) -> String {
     let total_us = (sim.total_time_ns as f64) / 1000.0;
-    let max_time = if sim.total_time_ns == 0 { 1 } else { sim.total_time_ns };
+    let max_time = if sim.total_time_ns == 0 {
+        1
+    } else {
+        sim.total_time_ns
+    };
 
     // Group events by resource track
     let mut tracks: Vec<String> = Vec::new();

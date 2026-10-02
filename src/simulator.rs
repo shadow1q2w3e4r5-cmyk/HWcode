@@ -10,10 +10,10 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InjectedFault {
     None,
-    LinkDisconnect,   // Simulates PCIe P2P link failure, triggering NORMAL -> FAILED -> REPLAN -> FALLBACK -> RECOVERED
-    GpuTimeout,       // Simulates GPU queue watchdog timeout
-    DmaError,         // Simulates DMA bus fault / descriptor error
-    ThermalThrottle,  // Simulates thermal sensor exceeding threshold, throttling frequency & bandwidth
+    LinkDisconnect, // Simulates PCIe P2P link failure, triggering NORMAL -> FAILED -> REPLAN -> FALLBACK -> RECOVERED
+    GpuTimeout,     // Simulates GPU queue watchdog timeout
+    DmaError,       // Simulates DMA bus fault / descriptor error
+    ThermalThrottle, // Simulates thermal sensor exceeding threshold, throttling frequency & bandwidth
     MemoryCorruption, // Simulates ECC / parity corruption detection
 }
 
@@ -78,15 +78,37 @@ pub struct SimulationResult {
 impl SimulationResult {
     pub fn format_report(&self) -> String {
         let mut out = Vec::new();
-        out.push("================================================================================".to_string());
+        out.push(
+            "================================================================================"
+                .to_string(),
+        );
         out.push("  HWCode Hardware Graph Simulator & Timeline Profiler".to_string());
-        out.push("================================================================================".to_string());
+        out.push(
+            "================================================================================"
+                .to_string(),
+        );
         out.push(format!("  Status                   : {}", self.status));
-        out.push(format!("  Total Simulated Time     : {} ns ({:.3} us)", self.total_time_ns, self.total_time_ns as f64 / 1000.0));
-        out.push(format!("  Total DMA Data Moved     : {} bytes", self.total_bytes_transferred));
-        out.push(format!("  Layout Conversions       : {}", self.layout_conversions_executed));
-        out.push(format!("  Peak Power Draw          : {:.1} W", self.peak_power_watts));
-        out.push(format!("  Simulated Junction Temp  : {:.1} C", self.simulated_temp_c));
+        out.push(format!(
+            "  Total Simulated Time     : {} ns ({:.3} us)",
+            self.total_time_ns,
+            self.total_time_ns as f64 / 1000.0
+        ));
+        out.push(format!(
+            "  Total DMA Data Moved     : {} bytes",
+            self.total_bytes_transferred
+        ));
+        out.push(format!(
+            "  Layout Conversions       : {}",
+            self.layout_conversions_executed
+        ));
+        out.push(format!(
+            "  Peak Power Draw          : {:.1} W",
+            self.peak_power_watts
+        ));
+        out.push(format!(
+            "  Simulated Junction Temp  : {:.1} C",
+            self.simulated_temp_c
+        ));
 
         if !self.fault_recovery_log.is_empty() {
             out.push("\n--- Fault Injection & Dynamic Topology Recovery Log ---".to_string());
@@ -115,7 +137,10 @@ impl SimulationResult {
                 ev.action
             ));
         }
-        out.push("================================================================================".to_string());
+        out.push(
+            "================================================================================"
+                .to_string(),
+        );
         out.join("\n")
     }
 }
@@ -167,7 +192,10 @@ impl HardwareSimulator {
                         start_ns: clock_ns,
                         end_ns: clock_ns + dur,
                         resource: domain.clone(),
-                        action: format!("Alloc `{}` : {} ({}, {}B)", var_name, semantic_type, layout, bytes),
+                        action: format!(
+                            "Alloc `{}` : {} ({}, {}B)",
+                            var_name, semantic_type, layout, bytes
+                        ),
                         route_state: current_route_state.clone(),
                     });
                     clock_ns += dur;
@@ -223,10 +251,13 @@ impl HardwareSimulator {
 
                         current_route_state = RouteState::Replan;
                         route_states.push("REPLAN".to_string());
-                        let fb_path = planned
-                            .fallback_hops
-                            .clone()
-                            .unwrap_or_else(|| vec![planned.source.clone(), "/F2".to_string(), planned.destination.clone()]);
+                        let fb_path = planned.fallback_hops.clone().unwrap_or_else(|| {
+                            vec![
+                                planned.source.clone(),
+                                "/F2".to_string(),
+                                planned.destination.clone(),
+                            ]
+                        });
                         recovery_log.push(format!(
                             "RoutePlanner: Re-evaluating capability graph -> Selected fallback route via SystemRAM: {}",
                             fb_path.join(" -> ")
@@ -235,19 +266,27 @@ impl HardwareSimulator {
                             start_ns: clock_ns,
                             end_ns: clock_ns + 180,
                             resource: "RoutePlanner".to_string(),
-                            action: format!("Replan Route #{} -> Fallback {}", route_id, fb_path.join(" -> ")),
+                            action: format!(
+                                "Replan Route #{} -> Fallback {}",
+                                route_id,
+                                fb_path.join(" -> ")
+                            ),
                             route_state: current_route_state.clone(),
                         });
                         clock_ns += 180;
 
                         current_route_state = RouteState::Fallback;
                         route_states.push("FALLBACK".to_string());
-                        let fb_dur = ((planned.total_latency_ns as f64) * 1.8 * latency_multiplier) as u64;
+                        let fb_dur =
+                            ((planned.total_latency_ns as f64) * 1.8 * latency_multiplier) as u64;
                         timeline.push(TimelineEvent {
                             start_ns: clock_ns,
                             end_ns: clock_ns + fb_dur,
                             resource: fb_path.join("->"),
-                            action: format!("Fallback transfer `{}` via SystemRAM staging", payload),
+                            action: format!(
+                                "Fallback transfer `{}` via SystemRAM staging",
+                                payload
+                            ),
                             route_state: current_route_state.clone(),
                         });
                         clock_ns += fb_dur;
@@ -258,7 +297,8 @@ impl HardwareSimulator {
                             "Runtime: Route #{} transfer of `{}` completed safely via fallback path.",
                             route_id, payload
                         ));
-                        status = "RECOVERED (Handled injected link disconnect via fallback route)".to_string();
+                        status = "RECOVERED (Handled injected link disconnect via fallback route)"
+                            .to_string();
                     } else {
                         let dur = ((planned.total_latency_ns as f64) * latency_multiplier) as u64;
                         peak_power = peak_power.max(28.0 + planned.estimated_power_watts * 8.0);
@@ -322,7 +362,8 @@ impl HardwareSimulator {
                         clock_ns += 300;
                         current_route_state = RouteState::Recovered;
                         route_states.push("RECOVERED".to_string());
-                        status = "RECOVERED (DMA engine reset & idempotent retry succeeded)".to_string();
+                        status =
+                            "RECOVERED (DMA engine reset & idempotent retry succeeded)".to_string();
                     }
                     let dur = (220.0 * latency_multiplier) as u64;
                     total_bytes += *bytes;
@@ -330,7 +371,10 @@ impl HardwareSimulator {
                         start_ns: clock_ns,
                         end_ns: clock_ns + dur,
                         resource: engine.clone(),
-                        action: format!("DMA {} -> {} : `{}` ({} B)", src_endpoint, dst_endpoint, payload, bytes),
+                        action: format!(
+                            "DMA {} -> {} : `{}` ({} B)",
+                            src_endpoint, dst_endpoint, payload, bytes
+                        ),
                         route_state: current_route_state.clone(),
                     });
                     clock_ns += dur;
@@ -349,7 +393,10 @@ impl HardwareSimulator {
                         start_ns: clock_ns,
                         end_ns: clock_ns + dur,
                         resource: mechanism.clone(),
-                        action: format!("LayoutConvert `{}`: {} -> {}", buffer, from_layout, to_layout),
+                        action: format!(
+                            "LayoutConvert `{}`: {} -> {}",
+                            buffer, from_layout, to_layout
+                        ),
                         route_state: current_route_state.clone(),
                     });
                     clock_ns += dur;
@@ -399,7 +446,9 @@ impl HardwareSimulator {
                             "Device `{}` @ `{}` exceeded command queue timeout -> HardwareError::Timeout",
                             device_var, endpoint
                         ));
-                        status = "HALTED_SAFE (HardwareError::Timeout caught by runtime supervisor)".to_string();
+                        status =
+                            "HALTED_SAFE (HardwareError::Timeout caught by runtime supervisor)"
+                                .to_string();
                     }
                     let dur = 110;
                     timeline.push(TimelineEvent {
@@ -462,7 +511,9 @@ impl HardwareSimulator {
                     });
                     clock_ns += 5;
                 }
-                HirInstruction::NativeCall { func_name, args, .. } => {
+                HirInstruction::NativeCall {
+                    func_name, args, ..
+                } => {
                     timeline.push(TimelineEvent {
                         start_ns: clock_ns,
                         end_ns: clock_ns + 30,
@@ -489,7 +540,14 @@ impl HardwareSimulator {
                         resource: queue.clone(),
                         action: format!(
                             "Kernel `{}` [grid=({},{},{}), block=({},{},{})] args=({})",
-                            kernel_name, grid.0, grid.1, grid.2, block.0, block.1, block.2, args.join(", ")
+                            kernel_name,
+                            grid.0,
+                            grid.1,
+                            grid.2,
+                            block.0,
+                            block.1,
+                            block.2,
+                            args.join(", ")
                         ),
                         route_state: current_route_state.clone(),
                     });
@@ -504,7 +562,10 @@ impl HardwareSimulator {
                         start_ns: clock_ns,
                         end_ns: clock_ns + 25,
                         resource: endpoint.clone(),
-                        action: format!("VectorTable: bind IRQ #{} -> fn {}()", vector, handler_name),
+                        action: format!(
+                            "VectorTable: bind IRQ #{} -> fn {}()",
+                            vector, handler_name
+                        ),
                         route_state: current_route_state.clone(),
                     });
                     clock_ns += 25;
@@ -518,7 +579,10 @@ impl HardwareSimulator {
                         start_ns: clock_ns,
                         end_ns: clock_ns + penalty_ns,
                         resource: resource.clone(),
-                        action: format!("Contention delay ({} concurrent ops, +{}ns)", concurrent_ops, penalty_ns),
+                        action: format!(
+                            "Contention delay ({} concurrent ops, +{}ns)",
+                            concurrent_ops, penalty_ns
+                        ),
                         route_state: current_route_state.clone(),
                     });
                     clock_ns += penalty_ns;
@@ -536,7 +600,10 @@ impl HardwareSimulator {
                         start_ns: clock_ns,
                         end_ns: clock_ns + dur,
                         resource: "RDMA_RoCEv2".to_string(),
-                        action: format!("RDMA {} -> {} : `{}` ({} bytes, verb={})", src_node, dst_node, payload, bytes, verb),
+                        action: format!(
+                            "RDMA {} -> {} : `{}` ({} bytes, verb={})",
+                            src_node, dst_node, payload, bytes, verb
+                        ),
                         route_state: current_route_state.clone(),
                     });
                     clock_ns += dur;
@@ -558,7 +625,13 @@ impl HardwareSimulator {
                         resource: endpoint.clone(),
                         action: format!(
                             "NPU Tensor {} [dims=({},{},{},{})] inputs=({}) -> {}",
-                            op_type, dims.0, dims.1, dims.2, dims.3, inputs.join(", "), output
+                            op_type,
+                            dims.0,
+                            dims.1,
+                            dims.2,
+                            dims.3,
+                            inputs.join(", "),
+                            output
                         ),
                         route_state: current_route_state.clone(),
                     });
@@ -588,7 +661,10 @@ impl HardwareSimulator {
                         start_ns: clock_ns,
                         end_ns: clock_ns + 80,
                         resource: resource.clone(),
-                        action: format!("DVFS Throttle: {}MHz -> {}MHz ({})", old_mhz, new_mhz, reason),
+                        action: format!(
+                            "DVFS Throttle: {}MHz -> {}MHz ({})",
+                            old_mhz, new_mhz, reason
+                        ),
                         route_state: current_route_state.clone(),
                     });
                     clock_ns += 80;
@@ -601,7 +677,9 @@ impl HardwareSimulator {
                 "MemoryController: ECC parity mismatch detected on DMA payload -> HardwareError::Corruption"
                     .to_string(),
             );
-            status = "HALTED_SAFE (HardwareError::Corruption trapped before silent data corruption)".to_string();
+            status =
+                "HALTED_SAFE (HardwareError::Corruption trapped before silent data corruption)"
+                    .to_string();
         }
 
         SimulationResult {

@@ -8,10 +8,10 @@ use crate::diagnostics::Span;
 pub enum TokenKind {
     // Identifiers & Literals
     Ident(String),
-    IntLit(i64, Option<String>),   // value + optional unit like "W", "ms", "us", "C", "GBps"
+    IntLit(i64, Option<String>), // value + optional unit like "W", "ms", "us", "C", "GBps"
     FloatLit(f64, Option<String>), // value + optional unit
     StringLit(String),
-    EndpointLit(String),           // e.g. "/F3", "/F3::dma", "/N0/F3"
+    EndpointLit(String), // e.g. "/F3", "/F3::dma", "/N0/F3"
 
     // Keywords
     Fn,
@@ -47,32 +47,32 @@ pub enum TokenKind {
     Interrupt,
 
     // Operators & Punctuation
-    Arrow,      // -> or →
-    AutoRoute,  // ~> or ==> or ■
-    Colon,      // :
-    DoubleColon,// ::
-    Semicolon,  // ;
-    Comma,      // ,
-    Dot,        // .
-    At,         // @
-    Assign,     // =
-    EqEq,       // ==
-    NotEq,      // !=
-    Lt,         // <
-    Gt,         // >
-    Le,         // <=
-    Ge,         // >=
-    Plus,       // +
-    Minus,      // -
-    Star,       // *
-    Slash,      // /
-    Ampersand,  // &
-    LParen,     // (
-    RParen,     // )
-    LBrace,     // {
-    RBrace,     // }
-    LBracket,   // [
-    RBracket,   // ]
+    Arrow,       // -> or →
+    AutoRoute,   // ~> or ==> or ■
+    Colon,       // :
+    DoubleColon, // ::
+    Semicolon,   // ;
+    Comma,       // ,
+    Dot,         // .
+    At,          // @
+    Assign,      // =
+    EqEq,        // ==
+    NotEq,       // !=
+    Lt,          // <
+    Gt,          // >
+    Le,          // <=
+    Ge,          // >=
+    Plus,        // +
+    Minus,       // -
+    Star,        // *
+    Slash,       // /
+    Ampersand,   // &
+    LParen,      // (
+    RParen,      // )
+    LBrace,      // {
+    RBrace,      // }
+    LBracket,    // [
+    RBracket,    // ]
 
     Eof,
 }

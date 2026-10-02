@@ -16,12 +16,18 @@ pub fn generate_explanation(
     diags: &DiagnosticBag,
 ) -> String {
     let mut out = Vec::new();
-    out.push("================================================================================".to_string());
+    out.push(
+        "================================================================================"
+            .to_string(),
+    );
     out.push(format!(
         "  HWCode Compiler Physical Plan & Boundary Explanation — `{}`",
         filename
     ));
-    out.push("================================================================================".to_string());
+    out.push(
+        "================================================================================"
+            .to_string(),
+    );
 
     // 1. Hardware Graph & Selected Routes
     out.push("\n[1] HARDWARE GRAPH ROUTE SELECTION & TOPOLOGY DECISIONS".to_string());
@@ -56,10 +62,7 @@ pub fn generate_explanation(
                 "    - Predicted Latency : {} ns",
                 r.total_latency_ns
             ));
-            out.push(format!(
-                "    - Bottleneck Link   : {}",
-                r.bottleneck_link
-            ));
+            out.push(format!("    - Bottleneck Link   : {}", r.bottleneck_link));
             if let Some(fb) = &r.fallback_hops {
                 out.push(format!(
                     "    - Hot-Swap Fallback : {} (ready if primary link disconnects)",
@@ -124,7 +127,9 @@ pub fn generate_explanation(
         }
     }
     if !found_mem_ops {
-        out.push("  (All memory accesses are layout-compatible and within coherent domains)".to_string());
+        out.push(
+            "  (All memory accesses are layout-compatible and within coherent domains)".to_string(),
+        );
     }
 
     // 3. Clock Domain Crossings & Device State Transitions
@@ -218,6 +223,9 @@ pub fn generate_explanation(
         }
     }
 
-    out.push("================================================================================".to_string());
+    out.push(
+        "================================================================================"
+            .to_string(),
+    );
     out.join("\n")
 }

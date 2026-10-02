@@ -345,7 +345,12 @@ impl Parser {
         }
     }
 
-    fn parse_fn(&mut self, attributes: Vec<Attribute>, is_kernel: bool, diags: &mut DiagnosticBag) -> FnDecl {
+    fn parse_fn(
+        &mut self,
+        attributes: Vec<Attribute>,
+        is_kernel: bool,
+        diags: &mut DiagnosticBag,
+    ) -> FnDecl {
         let span = self.span();
         self.eat(&TokenKind::Fn);
         let name = self.expect_ident(diags, "function name");
@@ -537,7 +542,9 @@ impl Parser {
                         }
                         "args" => {
                             self.eat(&TokenKind::LBracket);
-                            while *self.peek_kind() != TokenKind::RBracket && *self.peek_kind() != TokenKind::Eof {
+                            while *self.peek_kind() != TokenKind::RBracket
+                                && *self.peek_kind() != TokenKind::Eof
+                            {
                                 args.push(self.parse_expr(diags));
                                 self.eat(&TokenKind::Comma);
                             }
@@ -1040,14 +1047,22 @@ impl Parser {
 
     fn parse_dim3(&mut self) -> (u32, u32, u32) {
         if self.eat(&TokenKind::LParen) {
-            let x = if let TokenKind::IntLit(v, _) = self.advance().kind { v as u32 } else { 1 };
+            let x = if let TokenKind::IntLit(v, _) = self.advance().kind {
+                v as u32
+            } else {
+                1
+            };
             let mut y = 1;
             let mut z = 1;
             if self.eat(&TokenKind::Comma) {
-                if let TokenKind::IntLit(v, _) = self.advance().kind { y = v as u32; }
+                if let TokenKind::IntLit(v, _) = self.advance().kind {
+                    y = v as u32;
+                }
             }
             if self.eat(&TokenKind::Comma) {
-                if let TokenKind::IntLit(v, _) = self.advance().kind { z = v as u32; }
+                if let TokenKind::IntLit(v, _) = self.advance().kind {
+                    z = v as u32;
+                }
             }
             self.eat(&TokenKind::RParen);
             (x, y, z)
