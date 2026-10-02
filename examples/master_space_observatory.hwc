@@ -1,0 +1,146 @@
+// ============================================================================
+// HWCode Master Showcase: Autonomous DeepSpace Observatory & AI Supercomputer
+// Exercises EVERY SINGLE CONCEPT of the HWCode Specification:
+// - Physical Layouts (Linear, Tiled2D, Tensor4D) & Memory Domains (RAM, VRAM, MMIO)
+// - Affine Ownership, Move Semantics & Release
+// - Hardware State Machines (Device<OpticalSensor, Active>) & Register Triggers
+// - Clock-Domain Crossing (CDC) Synchronization (doubleflop)
+// - First-Class DMA Engines & Asynchronous Event Await
+// - GPU Compute Kernels & Queue Dispatch
+// - Hardware Interrupt Service Routines & Vector Tables
+// - Linear Energy & Thermal Budget Accounting (100W envelope)
+// - Hardware Graph Routing with Dynamic Fallback & Contention Scheduling
+// - Distributed Multi-Node Cluster RDMA Transfer (RoCEv2)
+// - Security Audit Trail with explicit Unsafe Capability Blocks
+// ============================================================================
+
+// 1. Physical Layout Declarations (Section 4)
+layout Tiled2D {
+    block_x: 16;
+    block_y: 16;
+}
+
+layout Tensor4D {
+    n: 1;
+    c: 64;
+    h: 16;
+    w: 16;
+}
+
+// 2. Data Structures & C Interoperability (Section 2 & 12)
+struct TelescopeTelemetry {
+    frame_id: u32,
+    exposure_time_us: u32,
+    sensor_temp_c: f32,
+}
+
+extern "C" fn printf(fmt: str) -> i32;
+
+// 3. Companion Hardware Definition: Cryogenic Sensor (Section 7 & 12)
+device CryoSensor {
+    bus: I2C;
+    clock: SENSOR_CLK;
+    states: [Idle, Configuring, Active, Error];
+    initial: Idle;
+    register START: u32;
+    register STATUS: u32;
+    register TEMP_DATA: f32;
+    transition Idle -> Active on REG.START = 1;
+    transition Active -> Idle on REG.START = 0;
+    op read_temperature requires Active;
+}
+
+// 4. Hardware Interrupt Service Routine (Section 3, 5, 7)
+fn on_radiation_warning() -> i32 {
+    trace("radiation_irq_handled_safely");
+    return 0;
+}
+
+// 5. GPU Compute Kernel (Section 2, 4, 11)
+kernel fn denoise_and_tile_kernel(dim: i32, gain: f32) -> f32 {
+    let pixel_idx = dim + 1;
+    return gain;
+}
+
+// 6. Real-Time Temporal Function (Section 6 & 9)
+@realtime(deadline: 25ms, period: 50ms)
+fn telemetry_loop(sensor_val: f32) -> f32 {
+    return sensor_val;
+}
+
+// 7. Master Execution Pipeline
+fn main() {
+    trace("master_observatory_pipeline_start");
+
+    // --- Endpoint Discovery by Capability (Section 3) ---
+    let cpu = find(CPU);
+    let ram = find(RAM);
+    let gpu = find(GPU);
+    let disk = find(Storage);
+    let sensor = find(Sensor);
+    let npu = find(NPU);
+
+    // --- Linear Energy & Thermal Budget Accounting (Section 9) ---
+    let mission_power = acquire_budget(100W);
+    let gpu_budget = split_budget(mission_power, 55W);
+    let npu_budget = split_budget(mission_power, 30W);
+    let cpu_budget = split_budget(mission_power, 15W);
+
+    // --- Hardware Interrupt Vector Table Binding (Section 3 & 7) ---
+    interrupt /F7::interrupt vector 24 attach on_radiation_warning;
+
+    // --- Clock Domain Crossing (CDC) Synchronization (Section 6) ---
+    let raw_fpga_pulse = 1;
+    let synced_trigger = doubleflop(raw_fpga_pulse, CPU_CLK);
+
+    // --- Device Lifecycle State Machine Transition (Section 7) ---
+    sensor.REG.START = 1;
+    let initial_temp = sensor.read_temperature();
+
+    // --- Physical Domain Buffer Allocations (Section 4 & 5) ---
+    let raw_capture = RAM<Matrix<f32>>(Linear);
+    let gpu_target = VRAM<Matrix<f32>>(Tiled2D);
+    let npu_target = RAM<Matrix<f32>>(Linear);
+
+    // --- Affine Exclusive Resource Acquisition (Section 5) ---
+    let gpu_queue = acquire(/F3::queue, Mode::Shared);
+    let dma_channel = acquire(/F3::dma, Mode::Exclusive);
+
+    // --- First-Class DMA Transfer with Async Event Await (Section 5) ---
+    let dma_event = dma /F4 -> /F3 : raw_capture;
+    await dma_event;
+
+    // --- Auto-Discovered Route with Dynamic Fallback & Contention (Section 3, 8, 9) ---
+    disk ■ gpu : raw_capture fallback [disk -> cpu -> gpu] with {
+        deadline: 15ms;
+        power: 45W;
+    };
+
+    // Competing DMA transfer on PCIe fabric (triggers Contention Solver!)
+    dma /F4 -> /F3 : npu_target;
+
+    // --- GPU Compute Queue Dispatch (Section 11) ---
+    dispatch(gpu_queue, denoise_and_tile_kernel, grid: (32, 32, 1), block: (16, 16, 1), args: [raw_capture, npu_target]);
+
+    // --- NPU Matrix Core Acceleration with Automatic Tensor4D Packing (Section 4 & 11) ---
+    /F1 -> /F8 : raw_capture;
+
+    // --- Distributed Multi-Node Cluster RDMA Transfer over RoCEv2 (Section 3 & 8) ---
+    let node0_cluster = acquire(/N0/F3, Mode::Shared);
+    let node1_cluster = acquire(/N1/F3, Mode::Shared);
+    node0_cluster ■ node1_cluster : raw_capture with {
+        deadline: 20ms;
+        min_bandwidth: 12GBps;
+    };
+
+    // --- Security Audit Trail in Privileged Block (Section 10) ---
+    unsafe capability(Cap::MMIO) {
+        trace("direct_cryo_calibration_write");
+        sensor.REG.CFG = 1;
+    }
+
+    // --- Explicit Affine Resource Release (Section 5) ---
+    release(dma_channel);
+
+    trace("master_observatory_pipeline_complete");
+}

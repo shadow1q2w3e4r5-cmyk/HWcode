@@ -1,0 +1,17 @@
+[package]
+name = "hwcode"
+version = "0.1.0"
+edition = "2021"
+description = "HWCode — Universal Hardware-Oriented Systems Programming Language Compiler, HIR Planner, C Backend, and Hardware Simulator"
+
+[[bin]]
+name = "hwc"
+path = "src/main.rs"
+
+[[bin]]
+name = "snake"
+path = "src/bin/snake.rs"
+
+[lib]
+name = "hwcode"
+path = "src/lib.rs"

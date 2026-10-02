@@ -1,0 +1,32 @@
+// HWCode Phase 3 Demonstration:
+// Distributed Multi-Node Cluster RDMA and NPU Matrix Core Acceleration
+
+layout Tensor4D {
+    n: 1;
+    c: 64;
+    h: 16;
+    w: 16;
+}
+
+fn main() {
+    trace("phase3_cluster_pipeline_start");
+
+    // Phase 3 Endpoint Discovery
+    let node0_gpu = acquire(/N0/F3, Mode::Shared);
+    let node1_gpu = acquire(/N1/F3, Mode::Shared);
+    let npu = find(NPU);
+
+    // Allocate memory buffers
+    let host_weights = RAM<Matrix<f32>>(Linear);
+
+    // 1. Distributed Cluster RDMA transfer (/N0/F3 -> /N1/F3 over 100GbE RoCEv2)
+    node0_gpu ■ node1_gpu : host_weights with {
+        deadline: 10ms;
+        min_bandwidth: 12GBps;
+    };
+
+    // 2. NPU Tensor Core Acceleration with automatic 4D Tensor packing
+    /F1 -> /F8 : host_weights;
+
+    trace("phase3_cluster_pipeline_complete");
+}

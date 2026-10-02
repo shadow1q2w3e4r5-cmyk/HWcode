@@ -1,0 +1,43 @@
+// HWCode Phase 2 Demonstration:
+// GPU Compute Kernel, Interrupt Vector Attachment, Dual DMA Streaming, and Contention Scheduling
+
+layout Tiled2D {
+    block_x: 16;
+    block_y: 16;
+}
+
+// Phase 2 First-Class Compute Kernel
+kernel fn matrix_tensor_mul(dim: i32, alpha: f32) -> f32 {
+    let thread_id = dim + 1;
+    return alpha;
+}
+
+// Phase 2 Hardware Interrupt Service Routine
+fn on_thermal_alert() -> i32 {
+    trace("thermal_interrupt_handled");
+    return 0;
+}
+
+fn main() {
+    trace("phase2_start");
+
+    // Acquire resources and hardware queues
+    let gpu_queue = acquire(/F3::queue, Mode::Shared);
+    let sensor = find(Sensor);
+
+    // Phase 2 Hardware Interrupt Attachment
+    interrupt /F7::interrupt vector 18 attach on_thermal_alert;
+
+    // Allocate physical domain buffers
+    let stream_a = RAM<Matrix<f32>>(Linear);
+    let stream_b = RAM<Matrix<f32>>(Linear);
+
+    // Simultaneous DMA transfers contending for PCIe fabric (triggers Phase 2 Contention Solver!)
+    dma /F4 -> /F3 : stream_a;
+    dma /F4 -> /F3 : stream_b;
+
+    // Phase 2 Compute Queue Dispatch (1024 threads)
+    dispatch(gpu_queue, matrix_tensor_mul, grid: (32, 32, 1), block: (16, 16, 1), args: [stream_a, stream_b]);
+
+    trace("phase2_end");
+}

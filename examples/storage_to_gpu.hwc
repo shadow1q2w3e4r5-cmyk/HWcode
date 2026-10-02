@@ -1,0 +1,36 @@
+// HWCode Example: High-Throughput NVMe to GPU Stream with Thermal Budget & State Machine
+
+layout Tiled2D {
+    block_x: 16;
+    block_y: 16;
+}
+
+fn main() {
+    trace("pipeline_init");
+
+    // Discover hardware capability endpoints
+    cpu = find(CPU);
+    gpu = find(GPU);
+    disk = find(Storage);
+    sensor = find(Sensor);
+
+    // Acquire linear energy budget
+    let power_envelope = acquire_budget(50W);
+    let gpu_budget = split_budget(power_envelope, 30W);
+
+    // Allocate physical memory domain buffers
+    let host_buffer = RAM<Matrix<f32>>(Linear);
+    let device_buffer = VRAM<Matrix<f32>>(Tiled2D);
+
+    // Transition thermal sensor state: Idle -> Active
+    sensor.REG.START = 1;
+    let temp = sensor.read_temperature();
+
+    // Auto-discover optimal route (P2P DMA) with fallback through SystemRAM
+    disk ■ gpu : host_buffer fallback [disk -> cpu -> gpu] with {
+        deadline: 5ms;
+        power: 25W;
+    };
+
+    trace("pipeline_complete");
+}

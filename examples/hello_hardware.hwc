@@ -1,0 +1,49 @@
+// ============================================================================
+// HWCode Starter Tutorial: hello_hardware.hwc
+// A beginner-friendly example showing device typestates, power budgeting,
+// memory domains, and routing.
+// ============================================================================
+
+// 1. Declare a custom physical layout (Section 4)
+layout VectorTile {
+    length: 64;
+    alignment_bytes: 32;
+}
+
+// 2. Define a hardware peripheral state machine (Section 7 & 12)
+device ThermalSensor {
+    bus: I2C;
+    clock: SENSOR_CLK;
+    states: [Idle, Active, Overheat];
+    initial: Idle;
+    register START: u32;
+    register TEMP: f32;
+    transition Idle -> Active on REG.START = 1;
+    transition Active -> Idle on REG.START = 0;
+    op read_temperature requires Active;
+}
+
+// 3. Main program with realtime & power budget constraints (Section 8 & 9)
+@realtime(deadline: 20ms, period: 20ms, max_power: 10W)
+fn main() -> i32 {
+    trace("system_startup");
+
+    // Acquire an energy envelope of 10 Watts
+    let system_power = acquire_budget(10W);
+    let sensor_power = split_budget(system_power, 2W);
+    let compute_power = split_budget(system_power, 8W);
+
+    // Discover the sensor in the Hardware Graph & transition state
+    let mut sensor = find(Sensor);
+    sensor.REG.START = 1;
+    let temp = sensor.read_temperature();
+
+    // Allocate memory in Host System RAM
+    let mut telemetry_buf: RAM<Matrix<f32>>(VectorTile) = RAM<Matrix<f32>>(VectorTile);
+
+    // Route telemetry data from Sensor (/F7) to Host RAM (/F2)
+    /F7 -> /F2 : telemetry_buf;
+
+    trace("telemetry_acquired");
+    return 0;
+}
