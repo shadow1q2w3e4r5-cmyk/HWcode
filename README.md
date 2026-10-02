@@ -66,7 +66,7 @@ HWCode statically enforces correctness across 7 physical boundaries at compile t
 
 ### 1. Build from Source (Zero Dependencies)
 ```bash
-git clone https://github.com/<your-username>/HWcode.git
+git clone https://github.com/shadow1q2w3e4r5-cmyk/HWcode.git
 cd HWcode
 cargo build --release
 ```
